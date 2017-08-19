@@ -10,7 +10,7 @@ const words = fs.readFileSync("/usr/share/dict/words", "utf-8").toLowerCase().sp
 
 app.engine('handlebars', exphbs({defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
-app.use(bodyParser.urlencoded({extended: false}))
+app.use(bodyParser.urlencoded({extended: false}));
 app.use(expressValidator());
 app.use(morgan('combined'));
 app.use(session({
@@ -22,7 +22,8 @@ app.use(session({
 app.use('/', (req, res, next) => {
 if (!req.session.word){
   let random = Math.floor((Math.random()*(words.length-1)));
-  req.session.word = words.filter(word => word.length > 3)[random].split('');
+  let randomWord = words.filter(word => word.length > 3)[random].split('');
+  req.session.word = randomWord;
   req.session.hiddenLetter = Array(req.session.word.length).fill('_');
   req.session.guessesLeft = [];
   }
@@ -34,10 +35,10 @@ app.get('/', (req, res) => {
   let winCheckB = req.session.word.join('');
   let loseCheck = req.session.guessesLeft.length;
   if(loseCheck == '5'){
-    res.render('lose', {fullWord: winCheckB});
+  return res.render('lose', {winCheckB:winCheckB});
   }
-  else if(winCheckA === winCheckB){
-    res.render('win');
+  else if(winCheckA === winCheckB && winCheckB != []){
+  return res.render('win', {winCheckB:winCheckB});
   };
   console.log(req.session);
   console.log(req.session.word);
@@ -58,16 +59,26 @@ app.post('/guess', (req, res) => {
     };
     res.redirect('/');
   }else if (req.session.hiddenLetter.includes(req.body.guessInput)) {
-    res.redirect('/');
+    return res.redirect('/');
   }else{
     req.session.guessesLeft.push(req.body.guessInput);
-    res.redirect('/');
+    return res.redirect('/');
   };
 });
 
 app.post('/restart', (req, res) => {
-
-  res.redirect('/');
+  let random = Math.floor((Math.random()*(words.length-1)));
+  let randomWord = words.filter(word => word.length > 3)[random].split('');
+  req.session.word.splice(0);
+  req.session.hiddenLetter.splice(0);
+  req.session.guessesLeft.splice(0);
+  req.session.word.push.apply(req.session.word, randomWord);
+  req.session.hiddenLetter.push.apply(req.session.hiddenLetter, randomWord);
+  req.session.hiddenLetter.fill('_');
+  console.log(req.session.word);
+  console.log(req.session.hiddenLetter);
+  console.log(req.session.guessesLeft);
+  return res.redirect('/');
 });
 
 
