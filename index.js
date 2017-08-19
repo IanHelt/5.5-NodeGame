@@ -19,6 +19,9 @@ app.use(session({
   saveUninitialized: true,
 }));
 
+/* Checks if the word array exists and creates new variables in the session
+cookie if it is not found */
+
 app.use('/', (req, res, next) => {
 if (!req.session.word){
   let random = Math.floor((Math.random()*(words.length-1)));
@@ -29,6 +32,9 @@ if (!req.session.word){
   }
 next();
 });
+
+/* Creates the index, win, or lose pages based on conditions met by
+  if/else statements */
 
 app.get('/', (req, res) => {
   let winCheckA = req.session.hiddenLetter.join('');
@@ -47,8 +53,21 @@ app.get('/', (req, res) => {
   res.render('index', {hiddenLetterArray: req.session.hiddenLetter, incorrectGuesses: req.session.guessesLeft});
 });
 
-app.post('/guess', (req, res) => {
 
+  /* Posts the value of the letter on the button pushed by the user, then
+  checks if the letter exists in session.word.
+
+   If it exists then a for loop is executed that iterates over the content in session.word and replaces
+  underscores in session.hiddenLetter based on the index of the guessed letter
+  in session.word.
+
+   If it does not exist it pushes the guessed letter to session.guessesLeft,
+   which is used to display incorrect user guessesLeft
+
+   If the user tries to input a correct guess they had already previously guessed,
+   the page is redirected and nothing is changed */
+
+app.post('/guess', (req, res) => {
   if (req.session.word.includes(req.body.guessInput) == true
   && req.session.hiddenLetter.includes(req.body.guessInput) == false){
   for (var i = 0; i < req.session.word.length; i++){
@@ -65,6 +84,12 @@ app.post('/guess', (req, res) => {
     return res.redirect('/');
   };
 });
+
+  /* When the reset button is pushed, this generates a new word and splits
+   it into an array. The arrays storing data from the previous game are spliced
+   in order to make room for the new game. Push.apply is used because it allows
+   an array to be pushed into an array, and .push is a valid function argument
+   for .apply to use */
 
 app.post('/restart', (req, res) => {
   let random = Math.floor((Math.random()*(words.length-1)));
